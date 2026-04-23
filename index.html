@@ -1,0 +1,582 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>HAUTLENCE · 7:00 – 15:00 Chronograph</title>
+
+    <!-- PWA Meta -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HORUS Chrono">
+    <meta name="theme-color" content="#0a0c0e">
+    <meta name="description" content="Luxury chronograph PWA · Horus Swiss Precision">
+
+    <!-- Manifest -->
+    <link rel="manifest" href="data:application/manifest+json,{
+        %22name%22: %22Horus Chronometer%22,
+        %22short_name%22: %22Horus%22,
+        %22description%22: %22Luxury PWA chronograph · 7:00 – 15:00%22,
+        %22start_url%22: %22.%22,
+        %22display%22: %22standalone%22,
+        %22background_color%22: %22%230a0c0e%22,
+        %22theme_color%22: %22%230a0c0e%22,
+        %22orientation%22: %22portrait%22,
+        %22icons%22: [
+            {
+                %22src%22: %22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%23121518' stroke='%23b58d4a' stroke-width='12'/%3E%3Cpath d='M256 100 L280 220 L400 240 L300 340 L340 460 L256 380 L172 460 L212 340 L112 240 L232 220 Z' fill='%23d4af6e' opacity='0.9'/%3E%3Ccircle cx='256' cy='256' r='32' fill='%23e8dcc8'/%3E%3C/svg%3E%22,
+                %22sizes%22: %22512x512%22,
+                %22type%22: %22image/svg+xml%22,
+                %22purpose%22: %22any%22
+            }
+        ]
+    }">
+
+    <!-- iOS Splash Screens (basic) -->
+    <link rel="apple-touch-startup-image" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1170 2532'%3E%3Crect width='1170' height='2532' fill='%230a0c0e'/%3E%3Ctext x='585' y='1266' font-family='Cormorant Garamond' font-size='80' fill='%23d4af6e' text-anchor='middle'%3EHORUS%3C/text%3E%3C/svg%3E" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
+
+    <!-- Styles (unchanged luxury aesthetics) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #0a0c0e;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(180, 150, 100, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(200, 170, 120, 0.06) 0%, transparent 50%),
+                linear-gradient(135deg, #0e1012 0%, #050607 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            padding: 1rem;
+            margin: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .watch-case {
+            max-width: 680px;
+            width: 100%;
+            background: #121518;
+            background: linear-gradient(145deg, #1a1e22 0%, #0d1114 100%);
+            border-radius: 64px;
+            box-shadow:
+                0 30px 50px -10px rgba(0,0,0,0.8),
+                0 0 0 1px rgba(180, 150, 100, 0.15),
+                inset 0 1px 2px rgba(255,255,240,0.03);
+            padding: 2.2rem 2rem 2.8rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #2a2e32;
+        }
+
+        @media (max-width: 500px) {
+            body { padding: 0.5rem; align-items: flex-start; padding-top: 1rem; }
+            .watch-case { border-radius: 48px; padding: 1.8rem 1.2rem 2.2rem; }
+        }
+
+        .watch-case::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #c9a96b80, #e2c28b, #c9a96b80, transparent);
+        }
+
+        .brand {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.8rem;
+            padding: 0 0.2rem;
+        }
+
+        .brand-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: 1.8rem;
+            letter-spacing: 4px;
+            color: #e8dcc8;
+            text-transform: uppercase;
+            text-shadow: 0 0 15px #b99e6b30;
+        }
+
+        .brand-sub {
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            color: #9a927e;
+            text-transform: uppercase;
+        }
+
+        .dial-container {
+            position: relative;
+            margin: 0.5rem 0 1.5rem;
+            display: flex;
+            justify-content: center;
+            padding: 0.5rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (min-width: 400px) { .chart-wrapper { width: 300px; height: 300px; } }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            filter: drop-shadow(0 0 25px #1a100880);
+        }
+
+        .dial-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .dial-percent {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 500;
+            font-size: 3rem;
+            line-height: 1;
+            color: #f0e7d6;
+            text-shadow: 0 0 20px #d4b98b40;
+            letter-spacing: 2px;
+        }
+
+        .dial-label {
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            color: #b8a88c;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .complication-panel {
+            background: #0f1317;
+            border-radius: 40px;
+            padding: 1.8rem 1.5rem;
+            margin: 1.2rem 0 2rem;
+            border: 1px solid #2c3136;
+            box-shadow: inset 0 4px 8px #00000030, 0 8px 18px #00000060;
+            position: relative;
+        }
+
+        .complication-panel::after {
+            content: "";
+            position: absolute;
+            bottom: -1px;
+            left: 20%;
+            right: 20%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #b99e6b60, transparent);
+        }
+
+        .time-set-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .indicator-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #2a2e32;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        .indicator-dot.start { background: #5f7a6b; box-shadow: 0 0 12px #5f8a7040; }
+        .indicator-dot.end { background: #9e6a5e; box-shadow: 0 0 12px #b85f4a30; }
+
+        .time-label {
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            color: #b9b09c;
+            text-transform: uppercase;
+        }
+
+        .time-label small {
+            display: block;
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+            color: #7a7466;
+            margin-top: 2px;
+            font-weight: 300;
+        }
+
+        .luxury-input {
+            background: #1b2025;
+            border-radius: 60px;
+            padding: 0.2rem 0.2rem 0.2rem 1.5rem;
+            display: flex;
+            align-items: center;
+            border: 1px solid #3a3f45;
+            box-shadow: inset 0 2px 5px #00000060, 0 1px 2px #ffffff08;
+        }
+
+        .luxury-input input {
+            font-family: 'Inter', monospace;
+            font-size: 1.3rem;
+            font-weight: 400;
+            width: 130px;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #efe3cf;
+            text-align: right;
+            padding: 0.5rem 0.3rem;
+            letter-spacing: 1px;
+        }
+
+        .luxury-input input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7) sepia(0.3) hue-rotate(350deg);
+            opacity: 0.8;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .total-window-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1.2rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid #2a3036;
+        }
+
+        .window-badge {
+            background: #1b2127;
+            padding: 0.6rem 1.8rem;
+            border-radius: 40px;
+            border: 1px solid #3f453c;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            color: #cdc2ab;
+            box-shadow: inset 0 1px 3px #00000070;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.8rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stat-elapsed {
+            background: #151b20;
+            padding: 0.7rem 1.4rem;
+            border-radius: 50px;
+            border: 1px solid #353b40;
+        }
+
+        .remaining-badge {
+            background: #2c353d;
+            padding: 0.7rem 1.8rem;
+            border-radius: 50px;
+            border: 1px solid #7f735a;
+            box-shadow: 0 0 15px #a68b5d30, inset 0 1px 2px #fff1e010;
+        }
+
+        .footer-note {
+            text-align: right;
+            margin-top: 1.2rem;
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            color: #7e7a6e;
+        }
+
+        .crown {
+            position: absolute;
+            top: 28px;
+            right: 30px;
+            width: 40px;
+            height: 12px;
+            background: #2a2f33;
+            border-radius: 20px;
+            border: 1px solid #6b5f4b;
+            box-shadow: inset 0 2px 3px #000000, 0 2px 4px #00000060;
+        }
+
+        .crown::before {
+            content: "";
+            position: absolute;
+            top: -8px;
+            left: 10px;
+            width: 20px;
+            height: 8px;
+            background: #3a4046;
+            border-radius: 10px 10px 0 0;
+            border: 1px solid #7a6e58;
+        }
+    </style>
+</head>
+<body>
+<div class="watch-case">
+    <div class="crown"></div>
+
+    <div class="brand">
+        <div class="brand-name">Horus</div>
+        <div class="brand-sub">Chronometer</div>
+    </div>
+
+    <div class="dial-container">
+        <div class="chart-wrapper">
+            <canvas id="luxuryPieChart"></canvas>
+            <div class="dial-center">
+                <div class="dial-percent" id="dialPercent">0%</div>
+                <div class="dial-label">elapsed</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="complication-panel">
+        <div class="time-set-row">
+            <div class="indicator">
+                <div class="indicator-dot start"></div>
+                <div class="time-label">DEPARTURE <small>window start</small></div>
+            </div>
+            <div class="luxury-input">
+                <input type="time" id="startTimeInput" step="60" value="07:00">
+            </div>
+        </div>
+        <div class="time-set-row">
+            <div class="indicator">
+                <div class="indicator-dot end"></div>
+                <div class="time-label">ARRIVAL <small>deadline</small></div>
+            </div>
+            <div class="luxury-input">
+                <input type="time" id="endTimeInput" step="60" value="15:00">
+            </div>
+        </div>
+        <div class="total-window-row">
+            <div class="window-badge">
+                ⌛ TOTAL INTERVAL <span id="totalDurationDisplay">8.00</span> HRS
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-elapsed">
+            <strong>⏳ ELAPSED</strong> <span id="elapsedDisplay">00:00:00</span>
+        </div>
+        <div class="remaining-badge" id="remainingDisplay">08:00:00</div>
+    </div>
+    <div class="footer-note">
+        automatic · swiss precision
+    </div>
+</div>
+
+<script>
+    (function(){
+        "use strict";
+
+        // ----- PWA service worker registration (for offline & installability) -----
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register("data:application/javascript," + encodeURIComponent(`
+                    self.addEventListener('install', (e) => {
+                        self.skipWaiting();
+                    });
+                    self.addEventListener('activate', (e) => {
+                        e.waitUntil(clients.claim());
+                    });
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(
+                            fetch(e.request).catch(() => caches.match(e.request))
+                        );
+                    });
+                `)).catch(err => console.log('SW registration optional', err));
+            });
+        }
+
+        // ----- DEFAULT SETUP: 07:00 – 15:00 (8 hours) -----
+        const DEFAULT_START = "07:00";
+        const DEFAULT_END   = "15:00";
+
+        const startInput = document.getElementById('startTimeInput');
+        const endInput = document.getElementById('endTimeInput');
+        const totalSpan = document.getElementById('totalDurationDisplay');
+        const elapsedSpan = document.getElementById('elapsedDisplay');
+        const remainingDiv = document.getElementById('remainingDisplay');
+        const dialPercent = document.getElementById('dialPercent');
+
+        const ctx = document.getElementById('luxuryPieChart').getContext('2d');
+
+        const goldGradient = ctx.createLinearGradient(0, 0, 200, 200);
+        goldGradient.addColorStop(0, '#d4af6e');
+        goldGradient.addColorStop(0.5, '#b58d4a');
+        goldGradient.addColorStop(1, '#9e7b44');
+
+        const darkRemaining = '#252b31';
+
+        let chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Elapsed', 'Remaining'],
+                datasets: [{
+                    data: [0, 8],
+                    backgroundColor: [goldGradient, darkRemaining],
+                    borderColor: '#0a0c0e',
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    spacing: 1,
+                }]
+            },
+            options: {
+                cutout: '72%',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e2328',
+                        titleColor: '#e0d3bc',
+                        bodyColor: '#c8bcA5',
+                        borderColor: '#b4945a',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: (ctx) => {
+                                const val = ctx.raw;
+                                const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                                const percent = total>0 ? ((val/total)*100).toFixed(1) : '0.0';
+                                return `${ctx.label}: ${val.toFixed(2)} hrs (${percent}%)`;
+                            }
+                        }
+                    }
+                },
+                animation: { duration: 600, easing: 'easeOutCubic' }
+            }
+        });
+
+        function parseTimeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [h, m] = timeStr.split(':').map(Number);
+            return (h || 0) * 60 + (m || 0);
+        }
+
+        function getCurrentMinutes() {
+            const now = new Date();
+            return now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+        }
+
+        function computeState() {
+            let startMin = parseTimeToMinutes(startInput.value);
+            let endMin = parseTimeToMinutes(endInput.value);
+            if (endMin <= startMin) endMin += 24 * 60;
+
+            const totalMinutes = endMin - startMin;
+            const nowMin = getCurrentMinutes();
+            let adjustedNow = nowMin;
+            if (adjustedNow < startMin) adjustedNow += 24 * 60;
+
+            let elapsedMinutes = adjustedNow - startMin;
+            elapsedMinutes = Math.min(Math.max(elapsedMinutes, 0), totalMinutes);
+
+            return {
+                totalMinutes,
+                elapsedMinutes,
+                remainingMinutes: totalMinutes - elapsedMinutes,
+                elapsedHrs: elapsedMinutes / 60,
+                remainingHrs: (totalMinutes - elapsedMinutes) / 60,
+                totalHrs: totalMinutes / 60
+            };
+        }
+
+        function formatHmsFromHours(hours) {
+            if (hours < 0) hours = 0;
+            const totalSec = Math.floor(hours * 3600);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updateAll() {
+            const state = computeState();
+            totalSpan.textContent = state.totalHrs.toFixed(2);
+
+            const progress = state.totalHrs > 0 ? (state.elapsedHrs / state.totalHrs) : 0;
+            const percentVal = (progress * 100).toFixed(1);
+            dialPercent.textContent = `${percentVal}%`;
+
+            const gradient = ctx.createLinearGradient(0, 0, 200, 200);
+            if (progress > 0.8) {
+                gradient.addColorStop(0, '#b06e5a');
+                gradient.addColorStop(0.7, '#a04e3a');
+            } else {
+                gradient.addColorStop(0, '#d4af6e');
+                gradient.addColorStop(0.6, '#b58d4a');
+            }
+            gradient.addColorStop(1, '#8f703e');
+
+            chart.data.datasets[0].data = [state.elapsedHrs, state.remainingHrs];
+            chart.data.datasets[0].backgroundColor = [gradient, '#1f262c'];
+            chart.update();
+
+            elapsedSpan.textContent = formatHmsFromHours(state.elapsedHrs);
+            remainingDiv.textContent = formatHmsFromHours(state.remainingHrs);
+        }
+
+        function applyDefaultSetup() {
+            startInput.value = DEFAULT_START;
+            endInput.value = DEFAULT_END;
+        }
+
+        applyDefaultSetup();
+        updateAll();
+
+        // Event listeners (touch & input)
+        startInput.addEventListener('change', updateAll);
+        startInput.addEventListener('input', updateAll);
+        endInput.addEventListener('change', updateAll);
+        endInput.addEventListener('input', updateAll);
+
+        const interval = setInterval(updateAll, 1000);
+        window.addEventListener('beforeunload', () => clearInterval(interval));
+        window.addEventListener('resize', () => chart.update());
+
+        // PWA install prompt improvement (optional) — just keep UX smooth
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed');
+        });
+    })();
+</script>
+</body>
+</html>
